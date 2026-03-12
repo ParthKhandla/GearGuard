@@ -131,7 +131,6 @@ All errors follow a consistent format:
 
 ## Future: Frontend Setup
 
-Frontend will be built separately in the `Frontend/` directory using React or similar framework.
 
 ## License
 
