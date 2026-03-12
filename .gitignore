@@ -68,3 +68,5 @@ yarn.lock
 
 # cloudinary uploads
 uploads/
+
+.early.coverage

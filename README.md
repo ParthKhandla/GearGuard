@@ -129,7 +129,8 @@ All errors follow a consistent format:
 - File uploads are stored temporarily in `public/temp/` before being sent to Cloudinary
 - Database queries are logged in development mode
 
-## Future: Frontend Setup
+## Frontend Setup
+
 
 
 ## License
