@@ -8,6 +8,9 @@ services:
     # Build command - runs database migrations
     buildCommand: npm run db:migrate
     
+    # Pre-deploy command - generates Prisma client before build
+    preDeployCommand: npm run db:generate
+    
     # Start command - runs the server
     startCommand: npm start
     
