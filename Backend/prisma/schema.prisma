@@ -11,18 +11,24 @@ datasource db {
 }
 
 model User {
-  id          Int      @id @default(autoincrement())
-  username    String   @unique
-  email       String   @unique
+  id              Int      @id @default(autoincrement())
+  username        String   @unique
+  email           String   @unique
   fullName    String
   password    String
   role        Role     @default(employee)
   department  String?
-  employeeId  String?  @unique
-  isActive    Boolean  @default(true)
-  refreshToken String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  employeeId      String?         @unique
+  specialization  Specialization?
+  isActive        Boolean         @default(true)
+  refreshToken    String?
+  resetOtp        String?
+  otpExpiresAt    DateTime?
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+  machines        Machine[]       @relation("CreatedMachines")
+  reportedTasks   Task[]          @relation("ReportedTasks")
+  assignedTasks   Task[]          @relation("AssignedTasks")
 
   @@map("users")
 }
@@ -31,4 +37,63 @@ enum Role {
   employee
   manager
   technician
+}
+
+enum Specialization {
+  general
+  electronics
+  electrical
+  mechanical
+  IT
+  civil
+}
+
+model Machine {
+  id                      Int             @id @default(autoincrement())
+  machineId               String          @unique
+  name                    String
+  category                String
+  department              String
+  maintenanceIntervalDays Int
+  lastMaintenanceDate     DateTime?
+  nextMaintenanceDate     DateTime?
+  createdBy               Int
+  creator                 User            @relation("CreatedMachines", fields: [createdBy], references: [id])
+  tasks                   Task[]
+  createdAt               DateTime        @default(now())
+  updatedAt               DateTime        @updatedAt
+
+  @@map("machines")
+}
+
+model Task {
+  id          Int          @id @default(autoincrement())
+  machineRefId Int
+  reportedBy  Int
+  assignedTo  Int?
+  title       String
+  description String
+  severity    TaskSeverity
+  status      TaskStatus    @default(open)
+  machine     Machine       @relation(fields: [machineRefId], references: [id], onDelete: Cascade)
+  reporter    User          @relation("ReportedTasks", fields: [reportedBy], references: [id])
+  assignee    User?         @relation("AssignedTasks", fields: [assignedTo], references: [id])
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  @@map("tasks")
+}
+
+enum TaskSeverity {
+  warning
+  critical
+  low
+  moderate
+}
+
+enum TaskStatus {
+  open
+  in_progress
+  pending_manager_approval
+  resolved
 }

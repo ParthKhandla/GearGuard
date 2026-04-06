@@ -2,16 +2,19 @@ import { asyncHandler } from "../utils/asyncHandler.js";
 import { ApiError } from "../utils/ApiError.js";
 import { prisma } from "../db/index.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
+import { DEPARTMENTS } from "../constants.js";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
-import { sendWelcomeEmail } from "../utils/sendEmail.js";
+import { sendWelcomeEmail, sendOtpEmail } from "../utils/sendEmail.js";
 
 const cookieOptions = {
     httpOnly: true,
     secure: true,
 };
 
-// ── Utility functions ──────────────────────────────────────────
+const ACTIVE_TASK_STATUSES = ["open", "in_progress", "pending_manager_approval"]
+
+// ── Utility functions ────────────────────────────────────────
 const isPasswordCorrect = async (password, hashedPassword) => {
     return await bcrypt.compare(password, hashedPassword);
 };
@@ -59,26 +62,29 @@ const generateAccessAndRefreshTokens = async (userId) => {
 
 
 // ─────────────────────────────────────────────
-//  1. MANAGER CREATES EMPLOYEE OR TECHNICIAN
+//  1. MANAGER CREATES EMPLOYEE, TECHNICIAN, OR MANAGER
 //     Route:  POST /api/users/manager/create-user
 //     Access: Private — only logged-in manager
-//     Body:   { fullName, email, username, password, role, department?, employeeId? }
+//     Body:   { fullName, email, username, password, role, department?, employeeId?, specialization? }
 // ─────────────────────────────────────────────
 const createUser = asyncHandler(async (req, res) => {
-    const { fullName, email, username, password, role, department, employeeId } = req.body
+    const { fullName, email, username, password, role, department, employeeId, specialization } = req.body
 
     if ([fullName, email, username, password, role].some((f) => !f || f.trim() === "")) {
         throw new ApiError(400, "fullName, email, username, password and role are required")
     }
 
-    if (role === "manager") {
-        throw new ApiError(403, "A manager cannot create another manager account")
+    if (!["employee", "technician", "manager"].includes(role)) {
+        throw new ApiError(400, "Role must be 'employee', 'technician', or 'manager'")
+    }
+    const validSpecializations = ["general", "electronics", "electrical", "mechanical", "IT", "civil"]
+    if (specialization && !validSpecializations.includes(specialization)) {
+        throw new ApiError(400, "Specialization must be one of: general, electronics, electrical, mechanical, IT, civil")
     }
 
-    if (!["employee", "technician"].includes(role)) {
-        throw new ApiError(400, "Role must be either 'employee' or 'technician'")
+    if (department && !DEPARTMENTS.includes(department)) {
+        throw new ApiError(400, `Department must be one of: ${DEPARTMENTS.join(", ")}`)
     }
-
     const existingUser = await prisma.user.findFirst({
         where: { OR: [{ username }, { email }] }
     })
@@ -104,11 +110,12 @@ const createUser = asyncHandler(async (req, res) => {
             role,
             department: department || null,
             employeeId: employeeId || null,
+            specialization: specialization || null,
         },
         select: {
             id: true, username: true, email: true,
             fullName: true, role: true, department: true,
-            employeeId: true, isActive: true,
+            employeeId: true, specialization: true, isActive: true,
             createdAt: true, updatedAt: true
         }
     })
@@ -121,13 +128,157 @@ const createUser = asyncHandler(async (req, res) => {
         password,      // plain password before hashing
         role,
         department,
-        employeeId
+        employeeId,
+        specialization
     })
 
     const roleLabel = role.charAt(0).toUpperCase() + role.slice(1)
 
     return res.status(201).json(
         new ApiResponse(201, user, `${roleLabel} account created successfully. Login details sent to ${email}`)
+    )
+})
+
+const createTechniciansBulk = asyncHandler(async (req, res) => {
+    const { technicians, sendEmails = false } = req.body
+
+    if (!Array.isArray(technicians) || technicians.length === 0) {
+        throw new ApiError(400, "technicians must be a non-empty array")
+    }
+
+    const validSpecializations = ["general", "electronics", "electrical", "mechanical", "IT", "civil"]
+    const results = []
+
+    for (const technician of technicians) {
+        const {
+            fullName,
+            email,
+            username,
+            password,
+            department,
+            employeeId,
+            specialization,
+        } = technician || {}
+
+        if ([fullName, email, username, password].some((f) => !f || String(f).trim() === "")) {
+            results.push({
+                username: username || null,
+                email: email || null,
+                employeeId: employeeId || null,
+                status: "failed",
+                reason: "fullName, email, username and password are required",
+            })
+            continue
+        }
+
+        if (specialization && !validSpecializations.includes(specialization)) {
+            results.push({
+                username,
+                email,
+                employeeId: employeeId || null,
+                status: "failed",
+                reason: "Invalid specialization",
+            })
+            continue
+        }
+
+        if (department && !DEPARTMENTS.includes(department)) {
+            results.push({
+                username,
+                email,
+                employeeId: employeeId || null,
+                status: "failed",
+                reason: `Invalid department. Must be one of: ${DEPARTMENTS.join(", ")}`,
+            })
+            continue
+        }
+
+        const existingUser = await prisma.user.findFirst({
+            where: {
+                OR: [
+                    { username: username.toLowerCase() },
+                    { email },
+                    ...(employeeId ? [{ employeeId }] : []),
+                ],
+            },
+            select: { id: true },
+        })
+
+        if (existingUser) {
+            results.push({
+                username,
+                email,
+                employeeId: employeeId || null,
+                status: "failed",
+                reason: "username, email, or employeeId already exists",
+            })
+            continue
+        }
+
+        const hashedPassword = await bcrypt.hash(password, 10)
+
+        const created = await prisma.user.create({
+            data: {
+                fullName,
+                email,
+                password: hashedPassword,
+                username: username.toLowerCase(),
+                role: "technician",
+                department: department || null,
+                employeeId: employeeId || null,
+                specialization: specialization || null,
+            },
+            select: {
+                id: true,
+                username: true,
+                email: true,
+                fullName: true,
+                role: true,
+                department: true,
+                employeeId: true,
+                specialization: true,
+                isActive: true,
+                createdAt: true,
+            },
+        })
+
+        if (sendEmails) {
+            try {
+                await sendWelcomeEmail({
+                    fullName,
+                    email,
+                    username,
+                    password,
+                    role: "technician",
+                    department,
+                    employeeId,
+                    specialization,
+                })
+            } catch (error) {
+                // Keep user created even if email fails.
+            }
+        }
+
+        results.push({
+            status: "created",
+            user: created,
+        })
+    }
+
+    const createdCount = results.filter((r) => r.status === "created").length
+    const failedCount = results.length - createdCount
+
+    return res.status(201).json(
+        new ApiResponse(
+            201,
+            {
+                totalRequested: technicians.length,
+                createdCount,
+                failedCount,
+                results,
+            },
+            "Bulk technician import processed"
+        )
     )
 })
 
@@ -242,12 +393,21 @@ const logoutUser = asyncHandler(async (req, res) => {
 });
 
 const deleteUser = asyncHandler(async (req, res) => {
-    const { id } = req.params  // ← id of user to delete from URL
+    const employeeId = req.body?.employeeId || req.query?.employeeId
+    const username = req.body?.username || req.query?.username
+    const email = req.body?.email || req.query?.email
 
-    // check if user exists
-    const user = await prisma.user.findUnique({
-        where: { id: parseInt(id) }
-    })
+    if (!employeeId && !username && !email) {
+        throw new ApiError(400, "Provide at least one of: employeeId, username, or email")
+    }
+
+    // Build OR conditions only for the fields that were supplied
+    const orConditions = []
+    if (employeeId) orConditions.push({ employeeId })
+    if (username)   orConditions.push({ username: username.toLowerCase() })
+    if (email)      orConditions.push({ email })
+
+    const user = await prisma.user.findFirst({ where: { OR: orConditions } })
     if (!user) {
         throw new ApiError(404, "User not found")
     }
@@ -257,17 +417,171 @@ const deleteUser = asyncHandler(async (req, res) => {
         throw new ApiError(400, "You cannot delete your own account")
     }
 
-    // prevent deleting another manager
-    if (user.role === "manager") {
-        throw new ApiError(403, "You cannot delete a manager account")
-    }
-
-    await prisma.user.delete({
-        where: { id: parseInt(id) }
-    })
+    await prisma.user.delete({ where: { id: user.id } })
 
     return res.status(200).json(
-        new ApiResponse(200, {}, "User deleted successfully")
+        new ApiResponse(200, {}, `User '${user.username}' deleted successfully`)
+    )
+})
+
+const listTechnicians = asyncHandler(async (req, res) => {
+    const includeInactive = req.query.includeInactive === "true"
+
+    const technicians = await prisma.user.findMany({
+        where: {
+            role: "technician",
+            ...(includeInactive ? {} : { isActive: true }),
+        },
+        select: {
+            id: true,
+            fullName: true,
+            username: true,
+            email: true,
+            employeeId: true,
+            department: true,
+            specialization: true,
+            isActive: true,
+            _count: {
+                select: {
+                    assignedTasks: {
+                        where: {
+                            status: { in: ACTIVE_TASK_STATUSES },
+                        },
+                    },
+                },
+            },
+        },
+        orderBy: [{ fullName: "asc" }],
+    })
+
+    const techniciansWithAvailability = technicians.map((tech) => ({
+        id: tech.id,
+        fullName: tech.fullName,
+        username: tech.username,
+        email: tech.email,
+        employeeId: tech.employeeId,
+        department: tech.department,
+        specialization: tech.specialization,
+        isActive: tech.isActive,
+        activeTaskCount: tech._count.assignedTasks,
+        isAvailableNow: tech._count.assignedTasks === 0,
+    }))
+
+    return res.status(200).json(
+        new ApiResponse(
+            200,
+            { total: techniciansWithAvailability.length, technicians: techniciansWithAvailability },
+            "Technicians fetched successfully"
+        )
+    )
+})
+
+const listAvailableTechnicians = asyncHandler(async (_req, res) => {
+    const technicians = await prisma.user.findMany({
+        where: {
+            role: "technician",
+            isActive: true,
+        },
+        select: {
+            id: true,
+            fullName: true,
+            username: true,
+            email: true,
+            employeeId: true,
+            department: true,
+            specialization: true,
+            _count: {
+                select: {
+                    assignedTasks: {
+                        where: {
+                            status: { in: ACTIVE_TASK_STATUSES },
+                        },
+                    },
+                },
+            },
+        },
+        orderBy: [{ fullName: "asc" }],
+    })
+
+    const availableTechnicians = technicians
+        .filter((tech) => tech._count.assignedTasks === 0)  // ✅ Only technicians with NO active tasks
+        .map((tech) => ({
+            id: tech.id,
+            fullName: tech.fullName,
+            username: tech.username,
+            email: tech.email,
+            employeeId: tech.employeeId,
+            department: tech.department,
+            specialization: tech.specialization,
+            activeTaskCount: 0,
+            isAvailableNow: true,
+        }))
+
+    return res.status(200).json(
+        new ApiResponse(
+            200,
+            { total: availableTechnicians.length, technicians: availableTechnicians },
+            "Available technicians fetched successfully"
+        )
+    )
+})
+
+// ─────────────────────────────────────────────
+//  GET AVAILABLE GENERAL TECHNICIANS (for periodic maintenance)
+//     Route:  GET /users/manager/technicians/available-general
+//     Access: Private (manager only)
+// ─────────────────────────────────────────────
+const listAvailableGeneralTechnicians = asyncHandler(async (_req, res) => {
+    const technicians = await prisma.user.findMany({
+        where: {
+            role: "technician",
+            isActive: true,
+            OR: [
+                { specialization: null },  // General technicians (no specialization)
+                { specialization: "general" },  // General specialization type
+            ],
+        },
+        select: {
+            id: true,
+            fullName: true,
+            username: true,
+            email: true,
+            employeeId: true,
+            department: true,
+            specialization: true,
+            _count: {
+                select: {
+                    assignedTasks: {
+                        where: {
+                            status: { in: ACTIVE_TASK_STATUSES },
+                        },
+                    },
+                },
+            },
+        },
+        orderBy: [{ fullName: "asc" }],
+    })
+
+    const availableTechnicians = technicians
+        .filter((tech) => tech._count.assignedTasks === 0)  // Only technicians with NO active tasks
+        .map((tech) => ({
+            id: tech.id,
+            fullName: tech.fullName,
+            username: tech.username,
+            email: tech.email,
+            employeeId: tech.employeeId,
+            department: tech.department,
+            specialization: tech.specialization,
+            activeTaskCount: 0,
+            isAvailableNow: true,
+        }))
+
+    return res.status(200).json(
+        new ApiResponse(
+            200,
+            { total: availableTechnicians.length, technicians: availableTechnicians },
+            "Available general technicians fetched successfully"
+        )
     )
 })
 
@@ -313,12 +627,195 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
 });
 
 
+// ─────────────────────────────────────────────
+//  LIST ALL USERS
+//  Route:  GET /api/users/manager/all-users
+//  Access: Private (manager only)
+// ─────────────────────────────────────────────
+const listAllUsers = asyncHandler(async (req, res) => {
+    const allUsers = await prisma.user.findMany({
+        select: {
+            id: true,
+            fullName: true,
+            username: true,
+            email: true,
+            role: true,
+            department: true,
+            employeeId: true,
+            specialization: true,
+            isActive: true,
+            createdAt: true,
+        },
+        orderBy: [{ fullName: "asc" }],
+    })
+
+    return res.status(200).json(
+        new ApiResponse(
+            200,
+            { total: allUsers.length, users: allUsers },
+            "All users fetched successfully"
+        )
+    )
+})
+
+
+// ─────────────────────────────────────────────
+//  SEND OTP FOR PASSWORD RESET
+//  Route:  POST /api/users/send-otp
+//  Access: Public
+//  Body:   { email }
+// ─────────────────────────────────────────────
+const sendOtp = asyncHandler(async (req, res) => {
+    const { email } = req.body
+
+    if (!email) {
+        throw new ApiError(400, "Email is required")
+    }
+
+    const user = await prisma.user.findUnique({
+        where: { email }
+    })
+
+    if (!user) {
+        throw new ApiError(404, "User with this email does not exist")
+    }
+
+    // Generate 6-digit OTP
+    const otp = Math.floor(100000 + Math.random() * 900000).toString()
+    const otpExpiresAt = new Date(Date.now() + 10 * 60 * 1000) // 10 minutes
+
+    // Save OTP to database
+    await prisma.user.update({
+        where: { id: user.id },
+        data: {
+            resetOtp: otp,
+            otpExpiresAt
+        }
+    })
+
+    // Send OTP email
+    await sendOtpEmail({
+        email: user.email,
+        otp,
+        fullName: user.fullName
+    })
+
+    return res.status(200).json(
+        new ApiResponse(200, {}, "OTP sent to your email successfully")
+    )
+})
+
+// ─────────────────────────────────────────────
+//  VERIFY OTP
+//  Route:  POST /api/users/verify-otp
+//  Access: Public
+//  Body:   { email, otp }
+// ─────────────────────────────────────────────
+const verifyOtp = asyncHandler(async (req, res) => {
+    const { email, otp } = req.body
+
+    if (!email || !otp) {
+        throw new ApiError(400, "Email and OTP are required")
+    }
+
+    const user = await prisma.user.findUnique({
+        where: { email }
+    })
+
+    if (!user) {
+        throw new ApiError(404, "User does not exist")
+    }
+
+    if (!user.resetOtp || user.resetOtp !== otp) {
+        throw new ApiError(400, "Invalid OTP")
+    }
+
+    if (new Date() > user.otpExpiresAt) {
+        throw new ApiError(400, "OTP has expired. Please request a new one")
+    }
+
+    // OTP is valid, return a temporary token for password reset
+    const resetToken = jwt.sign(
+        { id: user.id, email: user.email },
+        process.env.ACCESS_TOKEN_SECRET,
+        { expiresIn: "15m" }
+    )
+
+    return res.status(200).json(
+        new ApiResponse(200, { resetToken }, "OTP verified successfully")
+    )
+})
+
+// ─────────────────────────────────────────────
+//  RESET PASSWORD
+//  Route:  POST /api/users/reset-password
+//  Access: Public (with reset token)
+//  Body:   { email, newPassword, resetToken }
+// ─────────────────────────────────────────────
+const resetPassword = asyncHandler(async (req, res) => {
+    const { email, newPassword, resetToken } = req.body
+
+    if (!email || !newPassword || !resetToken) {
+        throw new ApiError(400, "Email, new password and reset token are required")
+    }
+
+    if (newPassword.length < 6) {
+        throw new ApiError(400, "Password must be at least 6 characters")
+    }
+
+    // Verify reset token
+    let decoded
+    try {
+        decoded = jwt.verify(resetToken, process.env.ACCESS_TOKEN_SECRET)
+    } catch (error) {
+        throw new ApiError(401, "Invalid or expired reset token")
+    }
+
+    if (decoded.email !== email) {
+        throw new ApiError(401, "Invalid reset token for this email")
+    }
+
+    const user = await prisma.user.findUnique({
+        where: { email }
+    })
+
+    if (!user) {
+        throw new ApiError(404, "User does not exist")
+    }
+
+    // Hash new password
+    const hashedPassword = await bcrypt.hash(newPassword, 10)
+
+    // Update password and clear OTP
+    await prisma.user.update({
+        where: { id: user.id },
+        data: {
+            password: hashedPassword,
+            resetOtp: null,
+            otpExpiresAt: null
+        }
+    })
+
+    return res.status(200).json(
+        new ApiResponse(200, {}, "Password reset successfully. You can now login with your new password")
+    )
+})
+
+
 export {
     createUser,
+    createTechniciansBulk,
     loginUser,
     logoutUser,
     getCurrentUser,
     refreshAccessToken,
     deleteUser,
-    changePassword
+    changePassword,
+    listTechnicians,
+    listAvailableTechnicians,
+    listAvailableGeneralTechnicians,
+    listAllUsers,
+    sendOtp,
+    verifyOtp,
+    resetPassword
 };

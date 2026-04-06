@@ -1,0 +1,135 @@
+.navbar {
+  background: white;
+  border-bottom: 2px solid #f0f0f0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.navbar-container {
+  max-width: 1400px;
+  margin: 0 auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+}
+
+.navbar-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+}
+
+.navbar-logo {
+  font-size: 28px;
+}
+
+.navbar-brand h1 {
+  color: #667eea;
+  margin: 0;
+  font-size: 22px;
+  font-weight: 700;
+}
+
+.navbar-menu {
+  display: flex;
+  gap: 30px;
+  flex: 1;
+  justify-content: center;
+}
+
+.nav-link {
+  color: #666;
+  text-decoration: none;
+  font-weight: 500;
+  padding: 8px 12px;
+  border-radius: 6px;
+  transition: all 0.3s;
+}
+
+.nav-link:hover,
+.nav-link.active {
+  color: #667eea;
+  background: rgba(102, 126, 234, 0.1);
+}
+
+.navbar-user {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.profile-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 8px 12px;
+  border-radius: 6px;
+  transition: all 0.3s;
+}
+
+.profile-btn:hover {
+  background: rgba(102, 126, 234, 0.1);
+}
+
+.user-info {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+.user-role {
+  font-size: 12px;
+  color: #999;
+  text-transform: uppercase;
+  font-weight: 600;
+}
+
+.user-name {
+  color: #333;
+  font-weight: 600;
+}
+
+.logout-btn {
+  background: #ff6b6b;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.3s;
+}
+
+.logout-btn:hover {
+  background: #ee5a52;
+  transform: translateY(-2px);
+}
+
+@media (max-width: 768px) {
+  .navbar-container {
+    flex-wrap: wrap;
+  }
+
+  .navbar-menu {
+    flex-basis: 100%;
+    justify-content: flex-start;
+    gap: 15px;
+    margin-top: 15px;
+  }
+
+  .nav-link {
+    font-size: 14px;
+  }
+
+  .navbar-user {
+    flex-basis: 100%;
+    margin-top: 15px;
+  }
+}

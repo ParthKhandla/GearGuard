@@ -1,12 +1,20 @@
 import { Router } from "express";
 import {
     createUser,
+    createTechniciansBulk,
     loginUser,
     logoutUser,
     getCurrentUser,
     refreshAccessToken,
     deleteUser,
-    changePassword
+    changePassword,
+    listTechnicians,
+    listAvailableTechnicians,
+    listAvailableGeneralTechnicians,
+    listAllUsers,
+    sendOtp,
+    verifyOtp,
+    resetPassword
 } from "../controllers/user.controller.js";
 import { verifyJWT, authorizeRoles } from "../middlewares/auth.middleware.js";
 
@@ -15,6 +23,9 @@ const router = Router();
 // ── Public ────────────────────────────────────────────────────
 router.post("/login",         loginUser);
 router.post("/refresh-token", refreshAccessToken);
+router.post("/send-otp",      sendOtp);
+router.post("/verify-otp",    verifyOtp);
+router.post("/reset-password", resetPassword);
 
 // ── Private (any logged-in user) ──────────────────────────────
 router.post("/logout", verifyJWT, logoutUser);
@@ -22,8 +33,13 @@ router.get ("/me",     verifyJWT, getCurrentUser);
 router.post("/change-password", verifyJWT, changePassword);
 
 // ── Manager only ──────────────────────────────────────────────
+router.get("/manager/all-users", verifyJWT, authorizeRoles("manager"), listAllUsers);
 router.post("/manager/create-user", verifyJWT, authorizeRoles("manager"), createUser);
+router.post("/manager/create-technicians-bulk", verifyJWT, authorizeRoles("manager"), createTechniciansBulk);
 
-router.delete("/manager/delete-user/:id", verifyJWT, authorizeRoles("manager"), deleteUser);
+router.delete("/manager/delete-user", verifyJWT, authorizeRoles("manager"), deleteUser);
+router.get("/manager/technicians", verifyJWT, authorizeRoles("manager"), listTechnicians);
+router.get("/manager/technicians/available", verifyJWT, authorizeRoles("manager"), listAvailableTechnicians);
+router.get("/manager/technicians/available-general", verifyJWT, authorizeRoles("manager"), listAvailableGeneralTechnicians);
 
 export default router;
