@@ -1,0 +1,25 @@
+services:
+  - type: web
+    name: gearguard-backend
+    env: node
+    region: oregon
+    plan: free
+    
+    # Build command - prepares Prisma
+    buildCommand: npm run build && npm run db:migrate
+    
+    # Start command - runs the server
+    startCommand: npm start
+    
+    # Environment variables - configure in Render dashboard
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 8000
+      
+    # Disk setup (optional - for file uploads)
+    disk:
+      name: gearguard-disk
+      mountPath: /var/data
+      sizeGB: 1
