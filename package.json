@@ -37,6 +37,7 @@
     "prisma": "^5.7.0"
   },
   "prisma": {
+    "schema": "./Backend/prisma/schema.prisma",
     "seed": "node Backend/prisma/seed.js"
   }
 }
