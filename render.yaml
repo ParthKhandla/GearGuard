@@ -6,7 +6,7 @@ services:
     plan: free
     
     # Build command - runs database migrations with schema path
-    buildCommand: npm run db:migrate
+    buildCommand: npm run migrate
     
     # Start command - runs the server
     startCommand: npm start
