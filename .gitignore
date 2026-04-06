@@ -37,6 +37,7 @@ dist/
 # IDE directories
 .vscode/
 .idea/
+.cph/
 
 # Mac system files
 .DS_Store
