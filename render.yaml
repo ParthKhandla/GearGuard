@@ -5,7 +5,7 @@ services:
     region: oregon
     plan: free
     
-    # Build command - runs database migrations
+    # Build command - runs database migrations with schema path
     buildCommand: npm run db:migrate
     
     # Start command - runs the server
