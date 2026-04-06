@@ -13,14 +13,14 @@
   "scripts": {
     "dev": "nodemon -r dotenv/config --experimental-json-modules Backend/src/index.js",
     "start": "node -r dotenv/config --experimental-json-modules Backend/src/index.js",
-    "build": "npm run db:generate",
+    "postinstall": "prisma generate",
+    "build": "npm run db:migrate",
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate deploy",
     "db:seed": "node Backend/prisma/seed.js"
   },
   "devDependencies": {
-    "nodemon": "^3.1.14",
-    "prisma": "^5.7.0"
+    "nodemon": "^3.1.14"
   },
   "dependencies": {
     "@prisma/client": "^5.22.0",
