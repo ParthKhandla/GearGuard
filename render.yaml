@@ -5,8 +5,8 @@ services:
     region: oregon
     plan: free
     
-    # Build command - runs migrations from Backend directory
-    buildCommand: cd Backend && npx prisma migrate deploy
+    # Build command - runs migrations with explicit schema path
+    buildCommand: npx prisma migrate deploy --schema=Backend/prisma/schema.prisma
     
     # Start command - runs the server
     startCommand: npm start
