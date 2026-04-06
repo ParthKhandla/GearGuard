@@ -1,7 +1,6 @@
 import { Router } from "express";
 import {
     createUser,
-    createTechniciansBulk,
     loginUser,
     logoutUser,
     getCurrentUser,
@@ -35,8 +34,6 @@ router.post("/change-password", verifyJWT, changePassword);
 // ── Manager only ──────────────────────────────────────────────
 router.get("/manager/all-users", verifyJWT, authorizeRoles("manager"), listAllUsers);
 router.post("/manager/create-user", verifyJWT, authorizeRoles("manager"), createUser);
-router.post("/manager/create-technicians-bulk", verifyJWT, authorizeRoles("manager"), createTechniciansBulk);
-
 router.delete("/manager/delete-user", verifyJWT, authorizeRoles("manager"), deleteUser);
 router.get("/manager/technicians", verifyJWT, authorizeRoles("manager"), listTechnicians);
 router.get("/manager/technicians/available", verifyJWT, authorizeRoles("manager"), listAvailableTechnicians);
