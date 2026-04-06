@@ -5,8 +5,8 @@ services:
     region: oregon
     plan: free
     
-    # Build command - prepares Prisma
-    buildCommand: npm run build && npm run db:migrate
+    # Build command - runs database migrations
+    buildCommand: npm run db:migrate
     
     # Start command - runs the server
     startCommand: npm start
