@@ -1,9 +1,15 @@
 require('dotenv').config();
-const { PrismaClient } = require('@prisma/client');
 
-const prisma = new PrismaClient({
-  log: ['query'], // Optional: log SQL queries
-});
+let prisma;
+try {
+  const { PrismaClient } = require('@prisma/client');
+  prisma = new PrismaClient({
+    log: ['query'],
+  });
+} catch (error) {
+  console.error('Failed to initialize Prisma:', error);
+  throw error;
+}
 
 const connectDB = async () => {
   try {
