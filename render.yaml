@@ -5,11 +5,11 @@ services:
     region: oregon
     plan: free
     
-    # Build command - runs migrations using prisma.config.ts
+    # Build command - installs dependencies and runs migrations
     buildCommand: npm install && npm run migrate
     
-    # Start command - runs the server
-    startCommand: npm start
+    # Start command - runs the server directly with node
+    startCommand: node --experimental-json-modules Backend/src/index.js
     
     # Environment variables - configure in Render dashboard
     envVars:
