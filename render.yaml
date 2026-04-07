@@ -6,7 +6,7 @@ services:
     plan: free
     
     # Build command - runs migrations using prisma.config.ts
-    buildCommand: npm run migrate
+    buildCommand: npm install && npm run migrate
     
     # Start command - runs the server
     startCommand: npm start
