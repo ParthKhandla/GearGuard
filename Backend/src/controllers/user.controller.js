@@ -1,11 +1,11 @@
-import { asyncHandler } from "../utils/asyncHandler.js";
-import { ApiError } from "../utils/ApiError.js";
-import { prisma } from "../db/index.js";
-import { ApiResponse } from "../utils/ApiResponse.js";
-import { DEPARTMENTS } from "../constants.js";
-import jwt from "jsonwebtoken";
-import bcrypt from "bcrypt";
-import { sendWelcomeEmail, sendOtpEmail } from "../utils/sendEmail.js";
+const { asyncHandler } = require("../utils/asyncHandler.js");
+const { ApiError } = require("../utils/ApiError.js");
+const { prisma } = require("../db/index.js");
+const { ApiResponse } = require("../utils/ApiResponse.js");
+const { DEPARTMENTS } = require("../constants.js");
+const jwt = require("jsonwebtoken");
+const bcrypt = require("bcrypt");
+const { sendWelcomeEmail, sendOtpEmail } = require("../utils/sendEmail.js");
 
 const cookieOptions = {
     httpOnly: true,
@@ -658,7 +658,7 @@ const resetPassword = asyncHandler(async (req, res) => {
 })
 
 
-export {
+module.exports = {
     createUser,
     loginUser,
     logoutUser,

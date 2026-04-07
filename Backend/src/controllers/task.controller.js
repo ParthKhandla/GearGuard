@@ -1,8 +1,8 @@
-import { asyncHandler } from "../utils/asyncHandler.js";
-import { ApiError } from "../utils/ApiError.js";
-import { prisma } from "../db/index.js";
-import { ApiResponse } from "../utils/ApiResponse.js";
-import { sendTaskAssignmentEmail } from "../utils/sendEmail.js";
+const { asyncHandler } = require("../utils/asyncHandler.js");
+const { ApiError } = require("../utils/ApiError.js");
+const { prisma } = require("../db/index.js");
+const { ApiResponse } = require("../utils/ApiResponse.js");
+const { sendTaskAssignmentEmail } = require("../utils/sendEmail.js");
 
 const VALID_SEVERITIES = ["warning", "critical", "low", "moderate"]
 const VALID_STATUSES = ["open", "in_progress", "pending_manager_approval", "resolved"]
@@ -376,4 +376,4 @@ const reviewTaskResolution = asyncHandler(async (req, res) => {
     )
 })
 
-export { reportTask, listTasks, getTask, assignTask, updateTaskStatus, reviewTaskResolution }
+module.exports = { reportTask, listTasks, getTask, assignTask, updateTaskStatus, reviewTaskResolution }

@@ -1,4 +1,4 @@
-import nodemailer from "nodemailer"
+const nodemailer = require("nodemailer")
 
 const transporter = nodemailer.createTransport({
     service: "gmail",
@@ -8,7 +8,7 @@ const transporter = nodemailer.createTransport({
     }
 })
 
-export const sendWelcomeEmail = async ({ fullName, email, username, password, role, department, employeeId }) => {
+const sendWelcomeEmail = async ({ fullName, email, username, password, role, department, employeeId }) => {
     const mailOptions = {
         from: `"Company System" <${process.env.EMAIL_USER}>`,
         to: email,
@@ -52,7 +52,7 @@ export const sendWelcomeEmail = async ({ fullName, email, username, password, ro
     await transporter.sendMail(mailOptions)
 }
 
-export const sendOtpEmail = async ({ email, otp, fullName }) => {
+const sendOtpEmail = async ({ email, otp, fullName }) => {
     const mailOptions = {
         from: `"Company System" <${process.env.EMAIL_USER}>`,
         to: email,
@@ -89,7 +89,7 @@ export const sendOtpEmail = async ({ email, otp, fullName }) => {
     await transporter.sendMail(mailOptions)
 }
 
-export const sendTaskAssignmentEmail = async ({ technicianEmail, technicianName, taskTitle, taskDescription, machineName, machineId, category, department, severity }) => {
+const sendTaskAssignmentEmail = async ({ technicianEmail, technicianName, taskTitle, taskDescription, machineName, machineId, category, department, severity }) => {
     const severityColor = severity === 'critical' ? '#d32f2f' : severity === 'moderate' ? '#ff9800' : '#2196f3'
     
     const mailOptions = {

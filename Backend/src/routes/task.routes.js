@@ -1,13 +1,13 @@
-import { Router } from "express";
-import {
+const { Router } = require("express");
+const {
     reportTask,
     listTasks,
     getTask,
     assignTask,
     updateTaskStatus,
     reviewTaskResolution,
-} from "../controllers/task.controller.js";
-import { verifyJWT, authorizeRoles } from "../middlewares/auth.middleware.js";
+} = require("../controllers/task.controller.js");
+const { verifyJWT, authorizeRoles } = require("../middlewares/auth.middleware.js");
 
 const router = Router();
 
@@ -23,4 +23,4 @@ router.put("/:taskId", verifyJWT, updateTaskStatus);
 router.patch("/:taskId/assign", verifyJWT, authorizeRoles("manager"), assignTask);
 router.patch("/:taskId/review", verifyJWT, authorizeRoles("manager"), reviewTaskResolution);
 
-export default router;
+module.exports = router;

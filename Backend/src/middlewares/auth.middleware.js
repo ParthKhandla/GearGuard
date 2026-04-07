@@ -1,12 +1,12 @@
-import jwt from "jsonwebtoken";
-import { ApiError } from "../utils/ApiError.js";
-import { prisma } from "../db/index.js";
-import { asyncHandler } from "../utils/asyncHandler.js";
+const jwt = require("jsonwebtoken");
+const { ApiError } = require("../utils/ApiError.js");
+const { prisma } = require("../db/index.js");
+const { asyncHandler } = require("../utils/asyncHandler.js");
 
 // ─────────────────────────────────────────────
 //  1. verifyJWT
 // ─────────────────────────────────────────────
-export const verifyJWT = asyncHandler(async (req, _, next) => {
+const verifyJWT = asyncHandler(async (req, _, next) => {
     const token =
         req.cookies?.accessToken ||
         req.header("Authorization")?.replace("Bearer ", "");
@@ -53,7 +53,7 @@ export const verifyJWT = asyncHandler(async (req, _, next) => {
 // ─────────────────────────────────────────────
 //  2. authorizeRoles(...roles)
 // ─────────────────────────────────────────────
-export const authorizeRoles = (...roles) => {
+const authorizeRoles = (...roles) => {
     return (req, _, next) => {
         if (!req.user) {
             throw new ApiError(401, "Authentication required");
@@ -67,3 +67,5 @@ export const authorizeRoles = (...roles) => {
         next();
     };
 };
+
+module.exports = { verifyJWT, authorizeRoles };

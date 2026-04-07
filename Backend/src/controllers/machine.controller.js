@@ -1,8 +1,8 @@
-import { asyncHandler } from "../utils/asyncHandler.js";
-import { ApiError } from "../utils/ApiError.js";
-import { prisma } from "../db/index.js";
-import { ApiResponse } from "../utils/ApiResponse.js";
-import { DEPARTMENTS } from "../constants.js";
+const { asyncHandler } = require("../utils/asyncHandler.js");
+const { ApiError } = require("../utils/ApiError.js");
+const { prisma } = require("../db/index.js");
+const { ApiResponse } = require("../utils/ApiResponse.js");
+const { DEPARTMENTS } = require("../constants.js");
 
 const parseMaintenanceDates = (lastMaintenanceDate, intervalDays) => {
     let lastDate = null
@@ -270,4 +270,4 @@ const getMachinesDueForMaintenance = asyncHandler(async (req, res) => {
     )
 })
 
-export { createMachine, listMachines, getMachine, updateMachine, deleteMachine, getMachinesDueForMaintenance }
+module.exports = { createMachine, listMachines, getMachine, updateMachine, deleteMachine, getMachinesDueForMaintenance }

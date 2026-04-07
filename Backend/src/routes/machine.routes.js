@@ -1,13 +1,13 @@
-import { Router } from "express";
-import {
+const { Router } = require("express");
+const {
     createMachine,
     listMachines,
     getMachine,
     deleteMachine,
     updateMachine,
     getMachinesDueForMaintenance,
-} from "../controllers/machine.controller.js";
-import { verifyJWT, authorizeRoles } from "../middlewares/auth.middleware.js";
+} = require("../controllers/machine.controller.js");
+const { verifyJWT, authorizeRoles } = require("../middlewares/auth.middleware.js");
 
 const router = Router();
 
@@ -21,4 +21,4 @@ router.get  ("/:machineId",          getMachine);
 router.put  ("/:machineId",          updateMachine);
 router.delete("/:machineId",         deleteMachine);
 
-export default router;
+module.exports = router;

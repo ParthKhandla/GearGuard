@@ -1,5 +1,5 @@
-import { Router } from "express";
-import {
+const { Router } = require("express");
+const {
     createUser,
     loginUser,
     logoutUser,
@@ -14,8 +14,8 @@ import {
     sendOtp,
     verifyOtp,
     resetPassword
-} from "../controllers/user.controller.js";
-import { verifyJWT, authorizeRoles } from "../middlewares/auth.middleware.js";
+} = require("../controllers/user.controller.js");
+const { verifyJWT, authorizeRoles } = require("../middlewares/auth.middleware.js");
 
 const router = Router();
 
@@ -39,4 +39,4 @@ router.get("/manager/technicians", verifyJWT, authorizeRoles("manager"), listTec
 router.get("/manager/technicians/available", verifyJWT, authorizeRoles("manager"), listAvailableTechnicians);
 router.get("/manager/technicians/available-general", verifyJWT, authorizeRoles("manager"), listAvailableGeneralTechnicians);
 
-export default router;
+module.exports = router;

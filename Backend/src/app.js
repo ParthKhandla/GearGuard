@@ -1,6 +1,6 @@
-import express from "express"
-import cors from "cors"
-import cookieParser from "cookie-parser"
+const express = require("express")
+const cors = require("cors")
+const cookieParser = require("cookie-parser")
 
 const app = express()
 
@@ -14,9 +14,9 @@ app.use(express.urlencoded({extended:true,limit:"16kb"}))
 app.use(express.static("public"))
 app.use(cookieParser())
 
-import userRouter from './routes/user.routes.js'
-import machineRouter from './routes/machine.routes.js'
-import taskRouter from './routes/task.routes.js'
+const userRouter = require('./routes/user.routes.js')
+const machineRouter = require('./routes/machine.routes.js')
+const taskRouter = require('./routes/task.routes.js')
 
 app.use("/api/v1/users",    userRouter)
 app.use("/api/v1/machines", machineRouter)
@@ -38,4 +38,4 @@ app.use((err, req, res, next) => {
     })
 })
 
-export {app}
+module.exports = {app}

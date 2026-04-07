@@ -1,10 +1,5 @@
-import { createRequire } from 'module';
-import dotenv from 'dotenv';
-
-const require = createRequire(import.meta.url);
+require('dotenv').config();
 const { PrismaClient } = require('@prisma/client');
-
-dotenv.config();
 
 const prisma = new PrismaClient({
   log: ['query'], // Optional: log SQL queries
@@ -20,5 +15,5 @@ const connectDB = async () => {
   }
 };
 
-export default connectDB;
-export { prisma };
+module.exports = connectDB;
+module.exports.prisma = prisma;
