@@ -11,8 +11,8 @@
 "type": "module",
 "main": "Backend/src/index.js",
 "scripts": {
-"dev": "nodemon -r dotenv/config --experimental-json-modules Backend/src/index.js",
-"start": "node -r dotenv/config --experimental-json-modules Backend/src/index.js",
+"dev": "nodemon --experimental-json-modules Backend/src/index.js",
+"start": "node --experimental-json-modules Backend/src/index.js",
 "migrate": "npx prisma migrate deploy --schema=Backend/prisma/schema.prisma"
 },
 "devDependencies": {
