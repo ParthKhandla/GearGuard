@@ -4,8 +4,20 @@ const cookieParser = require("cookie-parser")
 
 const app = express()
 
+const allowedOrigins = [
+    process.env.CORS_ORIGIN,
+    "https://gear-guard-alpha.vercel.app",
+    "https://gearguard-frontend.onrender.com"
+].filter(Boolean)
+
 app.use(cors({
-    origin: process.env.CORS_ORIGIN,
+    origin: function (origin, callback) {
+        if (!origin || allowedOrigins.includes(origin)) {
+            callback(null, true)
+        } else {
+            callback(new Error('Not allowed by CORS'))
+        }
+    },
     credentials: true
 }))
 
