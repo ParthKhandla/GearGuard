@@ -39,8 +39,6 @@ services:
   - type: web
     name: gearguard-frontend
     runtime: static
-    region: oregon
-    plan: free
     rootDir: Frontend
     buildCommand: npm install && npm run build
     staticPublishPath: dist
