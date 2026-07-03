@@ -139,3 +139,9 @@ const sendTaskAssignmentEmail = async ({ technicianEmail, technicianName, taskTi
 
     await transporter.sendMail(mailOptions)
 }
+
+module.exports = {
+    sendWelcomeEmail,
+    sendOtpEmail,
+    sendTaskAssignmentEmail
+};

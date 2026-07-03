@@ -1,25 +1,49 @@
 services:
+  # --- BACKEND SERVICE ---
   - type: web
     name: gearguard-backend
     env: node
     region: oregon
     plan: free
     
-    # Build command - installs dependencies (which triggers prisma generate via postinstall) and runs migrations
-    buildCommand: npm install && npm run migrate
+    # Build command - installs dependencies, generates Prisma client, and runs migrations
+    buildCommand: npm install && npx prisma generate --schema=Backend/prisma/schema.prisma && npm run migrate
     
-    # Start command - runs the server directly with node
+    # Start command - runs the server
     startCommand: node Backend/src/index.js
     
-    # Environment variables - configure in Render dashboard
+    # Environment variables
     envVars:
       - key: NODE_ENV
         value: production
       - key: PORT
         value: 8000
-      
-    # Disk setup (optional - for file uploads)
-    disk:
-      name: gearguard-disk
-      mountPath: /var/data
-      sizeGB: 1
+      - key: DATABASE_URL
+        sync: false
+      - key: ACCESS_TOKEN_SECRET
+        generateValue: true
+      - key: REFRESH_TOKEN_SECRET
+        generateValue: true
+      - key: ACCESS_TOKEN_EXPIRY
+        value: 7d
+      - key: REFRESH_TOKEN_EXPIRY
+        value: 10d
+      - key: CORS_ORIGIN
+        sync: false
+      - key: EMAIL_USER
+        sync: false
+      - key: EMAIL_PASS
+        sync: false
+
+  # --- FRONTEND SERVICE ---
+  - type: web
+    name: gearguard-frontend
+    env: static
+    region: oregon
+    plan: free
+    rootDir: Frontend
+    buildCommand: npm install && npm run build
+    publishPath: dist
+    envVars:
+      - key: VITE_API_BASE_URL
+        sync: false
