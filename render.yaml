@@ -36,13 +36,14 @@ services:
         sync: false
 
   # --- FRONTEND SERVICE ---
-  - type: static
+  - type: web
     name: gearguard-frontend
+    runtime: static
     region: oregon
     plan: free
     rootDir: Frontend
     buildCommand: npm install && npm run build
-    publishPath: dist
+    staticPublishPath: dist
     envVars:
       - key: VITE_API_BASE_URL
         sync: false
